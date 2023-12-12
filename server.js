@@ -1,7 +1,23 @@
+require('dotenv').config();
 const express = require('express');
 const app = express();
-const fruits = require('./models/fruits.js');
+const mongoose = require('mongoose');
+//const fruits = require('./models/fruits.js');
+
+const Fruit = require('./models/fruit');
+//const vegetables = require('./models/vegetables.js');
+const Vegetable = require('./models/vegetable');
 const jsxViewEngine = require('jsx-view-engine');
+
+//Global configuration
+const mongoURI = process.env.MONGO_URI;
+const db = mongoose.connection;
+
+// Connect to Mongo
+mongoose.connect(mongoURI);
+mongoose.connection.once('open', () => {
+    console.log('connected to mongo');
+})
 
 app.set('view engine', 'jsx');
 app.set('views', './views');
@@ -52,44 +68,116 @@ app.use(express.urlencoded({extended:false}));
 // S - Show     GET         READ - display a specific element
 
 app.get('/', (req, res) => {
-    res.send('this is my fruits root route');
+    res.send('this is my produce root route');
 });
 
 // I - INDEX - dsiplays a list of all fruits
-app.get('/fruits/', (req, res) => {
+app.get('/fruits/', async (req, res) => {
     // res.send(fruits);
-    res.render('Index', {fruits: fruits});
+    try {
+        const foundFruits = await Fruit.find({});
+        res.status(200).render('fruits/Index', {fruits: foundFruits});
+    } catch (err) {
+        res.status(400).send(err);
+    }
+    
 });
-
-
+app.get('/vegetables/',async (req, res) => {
+   // res.send(vegetables);
+   try {
+    const foundVegetables = await Vegetable.find({});
+    res.status(200).render('vegetables/Index', {vegetables: foundvegetables});
+} catch (err) {
+    res.status(400).send(err);
+}
+})
 // N - NEW - allows a user to input a new fruit
 app.get('/fruits/new', (req, res) => {
-    res.render('New');
+    res.render('fruits/New');
+});
+app.get('/vegetables/new', (req, res) => {
+    res.render('vegetables/New');
 });
 
 
 // C - CREATE - update our data store
-app.post('/fruits', (req, res) => {
+
+app.post('/fruits', async (req, res) => {
     if(req.body.readyToEat === 'on') { //if checked, req.body.readyToEat is set to 'on'
         req.body.readyToEat = true;
     } else {  //if not checked, req.body.readyToEat is undefined
         req.body.readyToEat = false;
     }
-    fruits.push(req.body);
+
+    try {
+        const createdFruit = await Fruit.create(req.body);
+        res.status(200).send(createdFruit);
+    } catch (err) {
+        res.status(400).send(err);
+    }
+    // fruits.push(req.body);
     // console.log(fruits);
     // console.log(req.body)
     // res.send('data received');
-    res.redirect('/fruits'); // send user back to /fruits
+    //  *** We will add this back in later
+    //  ***
+    // res.redirect('/fruits'); // send user back to /fruits
 })
 
+app.post('/vegetables', async (req, res) => {
+    if(req.body.readyToEat === 'on') { //if checked, req.body.readyToEat is set to 'on'
+        req.body.readyToEat = true;
+    } else {  //if not checked, req.body.readyToEat is undefined
+        req.body.readyToEat = false;
+    }
+
+    try {
+        const createdVegetable = await Vegetable.create(req.body);
+        res.status(200).send(createdVegetable);
+    } catch (err) {
+        res.status(400).send(err);
+    }
+    // fruits.push(req.body);
+    // console.log(vegetables);
+    // console.log(req.body)
+    // res.send('data received');
+    //  *** We will add this back in later
+    //  ***
+    // res.redirect('/fruits'); // send user back to /fruits
+})
+
+
+
+
+
+
+
 // S - SHOW - show route displays details of an individual fruit
-app.get('/fruits/:indexOfFruitsArray', (req, res) => {
+app.get('/fruits/:id', async (req, res) => {
     // res.send(fruits[req.params.indexOfFruitsArray]);
-    res.render('Show', {// second parameter must be an object
-        fruit: fruits[req.params.indexOfFruitsArray]
-    });
+    try {
+        const foundFruit = await Fruit.findById(req.params.id);
+        res.render('fruits/Show', {fruit: foundFruit});
+    } catch (err) {
+        res.status(400).send(err);
+    }
+
+})
+
+
+
+
+app.get('/vegetables/:id', async (req, res) => {
+    // res.send(fruits[req.params.indexOfFruitsArray]);
+    try {
+        const foundVegetable = await Vegetable.findById(req.params.id);
+        res.render('vegetables/Show', {vegetable: foundVegetable});
+    } catch (err) {
+        res.status(400).send(err);
+    }
+
 })
 
 app.listen(3000, () => {
     console.log('listening');
-});
+})
