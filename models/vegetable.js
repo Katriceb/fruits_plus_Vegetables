@@ -9,3 +9,10 @@ const vegetableSchema = new mongoose.Schema({
 const Vegetable = mongoose.model('Vegetable', vegetableSchema);
 
 module.exports = Vegetable;
+
+
+
+
+
+
+
